@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P3DDebinarizer", "P3DDebinarizer\P3DDebinarizer.csproj", "{A8DEDBF7-7D4F-48B9-AD95-530D8AE59460}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P3DDebinarizer", "src\P3DDebinarizer.csproj", "{A8DEDBF7-7D4F-48B9-AD95-530D8AE59460}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P3DDebinarizer.Tests", "P3DDebinarizer.Tests\P3DDebinarizer.Tests.csproj", "{E240662B-E6F1-4740-82AE-1801C24DBD3C}"
 EndProject

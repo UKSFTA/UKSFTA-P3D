@@ -9,9 +9,8 @@
       "P3DDebinarizer.Tests/1.0.0": {
         "dependencies": {
           "Microsoft.NET.Test.Sdk": "17.14.1",
-          "debinarizer": "1.0.0",
           "xunit": "2.9.3",
-          "debinarizer.Reference": "0.0.0.0"
+          "debinarizer.Reference": "1.5.6230.1995"
         },
         "runtime": {
           "P3DDebinarizer.Tests.dll": {}
@@ -332,18 +331,11 @@
           }
         }
       },
-      "debinarizer/1.0.0": {
+      "debinarizer.Reference/1.5.6230.1995": {
         "runtime": {
           "debinarizer.dll": {
-            "fileVersion": "0.0.0.0"
-          }
-        }
-      },
-      "debinarizer.Reference/0.0.0.0": {
-        "runtime": {
-          "debinarizer.dll": {
-            "assemblyVersion": "0.0.0.0",
-            "fileVersion": "0.0.0.0"
+            "assemblyVersion": "1.5.6230.1995",
+            "fileVersion": "1.5.0.0"
           }
         }
       }
@@ -432,12 +424,7 @@
       "path": "xunit.extensibility.execution/2.9.3",
       "hashPath": "xunit.extensibility.execution.2.9.3.nupkg.sha512"
     },
-    "debinarizer/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "debinarizer.Reference/0.0.0.0": {
+    "debinarizer.Reference/1.5.6230.1995": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""

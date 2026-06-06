@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("P3DDebinarizer.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22df34e73d275acb71f3e2508ee65a400df0c6b0")]
 [assembly: System.Reflection.AssemblyProductAttribute("P3DDebinarizer.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("P3DDebinarizer.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

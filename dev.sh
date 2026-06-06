@@ -19,11 +19,11 @@ case $command in
     "run")
         shift
         # Fast run using the dev DLL directly
-        dotnet P3DDebinarizer/bin/Debug/net10.0/debinarizer.dll "$@"
+        dotnet src/bin/Debug/net10.0/debinarizer.dll "$@"
         ;;
     "watch")
         echo "👀 Watching for changes..."
-        dotnet watch test --c Debug
+        dotnet watch test src/P3DDebinarizer.csproj --c Debug
         ;;
     *)
         echo "Usage: ./dev.sh {test|lint|run|watch}"

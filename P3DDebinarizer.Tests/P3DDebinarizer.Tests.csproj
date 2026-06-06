@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\P3DDebinarizer\P3DDebinarizer.csproj" />
+    <ProjectReference Include="..\src\P3DDebinarizer.csproj" />
   </ItemGroup>
 
 </Project>
