@@ -99,7 +99,7 @@ internal sealed class Program
                 {
                     outputPath = Path.Combine(outputDir, Path.GetFileName(file));
                 }
-                
+
                 if (ProcessFile(file, outputPath)) success++;
                 else failure++;
             }
@@ -133,13 +133,15 @@ internal sealed class Program
             using var stream = File.OpenRead(inputPath);
             var binaryReader = new BinaryReaderEx(stream);
             // binaryReader.Verbose = _verbose; // Temporarily commented out as it causes unexpected behavior elsewhere in the code
-            try {
+            try
+            {
                 var p3d = P3D.GetInstance(stream); // Pass stream, not binaryReader instance if needed
-                if (p3d == null) {
+                if (p3d == null)
+                {
                     Console.WriteLine($" [Warning] {inputPath}: Unsupported or unknown P3D format.");
                     return false;
                 }
-                
+
                 if (_showInfo) DumpInfo(p3d, inputPath);
                 if (_auditLods) AuditLods(p3d, inputPath);
                 if (_showMap && p3d is ODOL odolMap) DumpStructureMap(binaryReader, odolMap);
@@ -147,13 +149,18 @@ internal sealed class Program
                 if (outputPath != null && p3d is ODOL odol)
                 {
                     var mlod = BisDll.Model.Conversion.ODOL2MLOD(odol);
-                    
-                    if (_oldPath != null && _newPath != null) {
+
+                    if (_oldPath != null && _newPath != null)
+                    {
                         Console.WriteLine($" [*] Remapping paths: {_oldPath} -> {_newPath}");
-                        foreach (var lod in mlod.LODs) {
-                            if (lod.Textures != null) {
-                                for (int j = 0; j < lod.Textures.Length; j++) {
-                                    if (lod.Textures[j].Contains(_oldPath, StringComparison.OrdinalIgnoreCase)) {
+                        foreach (var lod in mlod.LODs)
+                        {
+                            if (lod.Textures != null)
+                            {
+                                for (int j = 0; j < lod.Textures.Length; j++)
+                                {
+                                    if (lod.Textures[j].Contains(_oldPath, StringComparison.OrdinalIgnoreCase))
+                                    {
                                         lod.Textures[j] = lod.Textures[j].Replace(_oldPath, _newPath, StringComparison.OrdinalIgnoreCase);
                                     }
                                 }
@@ -165,10 +172,14 @@ internal sealed class Program
                     Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
                 }
                 return true;
-            } catch (Exception ex) {
-                if (_verbose) {
+            }
+            catch (Exception ex)
+            {
+                if (_verbose)
+                {
                     Console.WriteLine("\n[Read Coverage Map on Failure]");
-                    foreach (var c in binaryReader.Coverage) {
+                    foreach (var c in binaryReader.Coverage)
+                    {
                         Console.WriteLine($"  {c.Start:X8} - {c.End:X8} | {c.Label}");
                     }
                 }
@@ -192,7 +203,8 @@ internal sealed class Program
         bool hasShadow = false;
         int visualLods = 0;
 
-        if (p3d.LODs == null) {
+        if (p3d.LODs == null)
+        {
             Console.WriteLine("  [!] No LOD data found.");
             return;
         }
@@ -211,7 +223,7 @@ internal sealed class Program
         }
 
         if (!hasGeometry) Console.WriteLine("  [!] MISSING GEOMETRY LOD (Server performance risk)");
-        if (!hasShadow)   Console.WriteLine("  [!] MISSING SHADOW VOLUME (Client performance risk)");
+        if (!hasShadow) Console.WriteLine("  [!] MISSING SHADOW VOLUME (Client performance risk)");
         if (visualLods < 2) Console.WriteLine("  [!] LOW LOD COUNT (Optimization risk)");
         Console.WriteLine("--------------------------------------------------\n");
     }
@@ -220,8 +232,9 @@ internal sealed class Program
     {
         Console.WriteLine($"File: {Path.GetFileName(path)} (v{p3d.Version})");
         Console.WriteLine($"  Mass: {p3d.Mass:F2}");
-        
-        if (p3d.LODs == null) {
+
+        if (p3d.LODs == null)
+        {
             Console.WriteLine("  LODs: 0");
             return;
         }
@@ -230,7 +243,7 @@ internal sealed class Program
         var allTextures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allSelections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allProxies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        
+
         foreach (var lod in p3d.LODs)
         {
             if (lod == null) continue;
@@ -238,33 +251,43 @@ internal sealed class Program
             int points = lod.Points?.Length ?? 0;
             int texturesCount = lod.Textures?.Length ?? 0;
             Console.WriteLine($"    - {name}: {points} pts, {texturesCount} textures");
-            
-            if (lod.Textures != null) {
+
+            if (lod.Textures != null)
+            {
                 foreach (var t in lod.Textures) if (!string.IsNullOrWhiteSpace(t)) allTextures.Add(t);
             }
-            try {
-                if (lod.Selections != null) {
+            try
+            {
+                if (lod.Selections != null)
+                {
                     foreach (var s in lod.Selections) if (!string.IsNullOrWhiteSpace(s)) allSelections.Add(s);
                 }
-            } catch {}
-            try {
-                if (lod.Proxies != null) {
+            }
+            catch { }
+            try
+            {
+                if (lod.Proxies != null)
+                {
                     foreach (var p in lod.Proxies) if (!string.IsNullOrWhiteSpace(p)) allProxies.Add(p);
                 }
-            } catch {}
+            }
+            catch { }
         }
 
-        if (allTextures.Count > 0) {
+        if (allTextures.Count > 0)
+        {
             Console.WriteLine("\n  [VFS Links]");
             foreach (var t in allTextures.OrderBy(x => x)) Console.WriteLine($"    - {t}");
         }
 
-        if (allSelections.Count > 0) {
+        if (allSelections.Count > 0)
+        {
             Console.WriteLine("\n  [Named Selections]");
             foreach (var s in allSelections.OrderBy(x => x)) Console.WriteLine($"    - {s}");
         }
 
-        if (allProxies.Count > 0) {
+        if (allProxies.Count > 0)
+        {
             Console.WriteLine("\n  [Proxies]");
             foreach (var p in allProxies.OrderBy(x => x)) Console.WriteLine($"    - {p}");
         }
@@ -276,7 +299,7 @@ internal sealed class Program
         Console.WriteLine("--------------------------------------------------");
         Console.WriteLine($"{"Offset (Hex)",-12} | {"Size",-8} | {"Label"}");
         Console.WriteLine("--------------------------------------------------");
-        
+
         var sorted = reader.Coverage.OrderBy(c => c.Start).ToList();
         long lastEnd = 0;
 
@@ -289,7 +312,7 @@ internal sealed class Program
             Console.WriteLine($"{start:X8}     | {(end - start),-8} | {label}");
             lastEnd = Math.Max(lastEnd, end);
         }
-        
+
         long fileSize = reader.BaseStream.Length;
         if (lastEnd < fileSize)
         {

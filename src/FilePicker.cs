@@ -58,7 +58,7 @@ public static class FilePicker
                 Console.WriteLine("DEBUG: Process.Start(zenity) returned null.");
                 return null;
             }
-            
+
             string output = process.StandardOutput.ReadToEnd().Trim();
             string error = process.StandardError.ReadToEnd().Trim();
             process.WaitForExit();
@@ -68,7 +68,7 @@ public static class FilePicker
                 Console.WriteLine($"DEBUG: zenity exited with code {process.ExitCode}. Error: {error}");
                 return null;
             }
-            
+
             return output;
         }
         catch (Exception ex)

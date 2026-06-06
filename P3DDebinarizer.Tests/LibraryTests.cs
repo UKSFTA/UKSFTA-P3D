@@ -10,7 +10,7 @@ namespace P3DDebinarizer.Tests;
 
 public class LibraryTests
 {
-    private static string GetTestP3dPath() 
+    private static string GetTestP3dPath()
     {
         // Navigate up to find test_p3ds folder
         var current = Directory.GetCurrentDirectory();
@@ -37,9 +37,10 @@ public class LibraryTests
     public void Parser_CanReadP3D_WithoutCrashing(string fileName)
     {
         string fullPath = Path.Combine(GetTestP3dPath(), fileName);
-        
+
         // This is the core 'Success' test - can we load it?
-        var exception = Record.Exception(() => {
+        var exception = Record.Exception(() =>
+        {
             using var fs = File.OpenRead(fullPath);
             BisDll.Model.P3D.GetInstance(fs);
         });
