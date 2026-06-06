@@ -1,0 +1,18 @@
+# Build artifacts
+bin/
+obj/
+dist/
+out/
+.vs/
+.vscode/
+
+# Build and OS files
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+
+# Dependencies
+**/bin/
+**/obj/
