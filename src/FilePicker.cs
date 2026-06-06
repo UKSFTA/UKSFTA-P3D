@@ -41,7 +41,7 @@ public static class FilePicker
 
     private static string? PickFileLinux()
     {
-        // Try Zenity as a lightweight, near-native GUI dependency on Linux
+        Console.WriteLine("DEBUG: Attempting to launch zenity...");
         try
         {
             var startInfo = new ProcessStartInfo
@@ -49,14 +49,31 @@ public static class FilePicker
                 FileName = "zenity",
                 Arguments = "--file-selection --title=\"Select P3D file\"",
                 RedirectStandardOutput = true,
+                RedirectStandardError = true, // Added to capture potential errors
                 UseShellExecute = false
             };
             using var process = Process.Start(startInfo);
-            return process?.StandardOutput.ReadToEnd().Trim();
+            if (process == null)
+            {
+                Console.WriteLine("DEBUG: Process.Start(zenity) returned null.");
+                return null;
+            }
+            
+            string output = process.StandardOutput.ReadToEnd().Trim();
+            string error = process.StandardError.ReadToEnd().Trim();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                Console.WriteLine($"DEBUG: zenity exited with code {process.ExitCode}. Error: {error}");
+                return null;
+            }
+            
+            return output;
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine("Zenity not found. Please provide a file path as an argument.");
+            Console.WriteLine($"DEBUG: Exception launching zenity: {ex.Message}");
             return null;
         }
     }
