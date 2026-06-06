@@ -97,6 +97,13 @@ internal sealed class Program
 
     private static void ProcessFile(string inputPath, string? outputPath)
     {
+        if (outputPath == null)
+        {
+            string directory = Path.GetDirectoryName(inputPath) ?? "";
+            string fileName = Path.GetFileNameWithoutExtension(inputPath);
+            outputPath = Path.Combine(directory, $"{fileName}_MLOD.p3d");
+        }
+
         try
         {
             using var stream = File.OpenRead(inputPath);
