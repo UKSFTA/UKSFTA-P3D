@@ -1,37 +1,66 @@
-# Arma 3 ODOL v73+ Technical Specification
+# Arma 3 ODOL Format Technical Specification (v73-v75)
 
 *Documented by Platinum DevOps Suite - June 6, 2026*
 
-## Overview
+## 1. Introduction
+This document defines the binary structure for Arma 3 ODOL (Object Data Layout) versions 73, 74, and 75. These versions introduce incremental metadata changes that require specific parsing logic to maintain stream alignment.
 
-This document details the binary structure of the Arma 3 Object Data Layout (ODOL) format, specifically focusing on the changes introduced in versions 73, 74, and 75. These findings were derived from forensic hex audits, dynamic structural mapping, and regression testing against 18 production assets.
+---
 
-## 1. File Header & Versioning
+## 2. Global Header Structure
+All versions share the same initial file header.
 
-The ODOL file begins with a standard 4-byte signature followed by the version number.
+| Offset | Type | Description |
+| :--- | :--- | :--- |
+| `0x00` | `char[4]` | Signature ("ODOL") |
+| `0x04` | `uint32` | Version (73, 74, or 75) |
+| `0x08` | `uint32` | AppID |
 
-| Offset | Type | Description | Notes |
+---
+
+## 3. Version-Specific Metadata Block
+After the standard header (and `MuzzleFlash` string), newer versions include additional fields that must be read to keep the parser synchronized.
+
+### v73 (Base v73+ Structure)
+- `MuzzleFlash` (ASCIIZ)
+- *Skip to LOD Table* (131-byte metadata/mystery block)
+
+### v74
+- `MuzzleFlash` (ASCIIZ)
+- `Unknown_A` (uint32)
+- `Unknown_B` (uint32)
+- *Skip to LOD Table* (131-byte metadata/mystery block)
+
+### v75
+- `MuzzleFlash` (ASCIIZ)
+- `Unknown_A` (uint32)
+- `Unknown_B` (uint32)
+- `PropertyMassDistribution` (float[4])
+- `PropertyThermalSignature` (float)
+- *Skip to LOD Table* (147-byte metadata/mystery block)
+
+---
+
+## 4. Metadata/Mystery Block Breakdown
+The "Mystery Block" is a fixed-size section used for internal engine metadata. Its size increases to accommodate new fields in v75.
+
+| Segment | v73/v74 | v75 | Description |
 | :--- | :--- | :--- | :--- |
-| `0x00` | `char[4]` | Signature | Must be "ODOL" |
-| `0x04` | `uint32` | Version | v73, v74, v75 observed |
+| Initial Padding | 1 byte | 1 byte | ASCIIZ terminator or padding |
+| Float Sequence | 12 floats | 12 floats | World-space constants |
+| Shadow/Padding | 16 bytes | 16 bytes | Reserved |
+| Model Floats | 11 floats | 11 floats | Model-specific physics constants |
+| New v75 Fields | - | 4 floats + 1 float | New thermal/mass distribution |
+| Terminator | 1 byte | 1 byte | Block termination flag |
 
-### Version-Specific Header Fields
+---
 
-*   **v74+**: Two unknown `uint32` fields appear after `MuzzleFlash` and before `nLods`.
-*   **v75+**: Further extension of the metadata header block, requiring a 16-byte offset shift compared to v73 to reach the LOD table.
+## 5. Synchronization Strategy
+Because these fields are critical for parser alignment, a blind skip is risky.
 
-## 2. ModelInfo Structure
-
-The `ModelInfo` block contains global metadata.
-
-*   **v75+ Changes**: Added `propertyMassDistribution` (float array, size=4) and `propertyThermalSignature` (float). These fields MUST be parsed to ensure correct stream alignment in v75 assets.
-
-## 3. The "Mystery Shift" & Synchronization
-
-Immediately following the `Animations` section (if present), or the `ModelInfo` block, v73+ models contain a substantial block of data.
-
-*   **v73/v74**: Size is 131 bytes.
-*   **v75**: Size is 147 bytes due to the addition of v75-specific metadata fields.
-
-**Synchronization Strategy**:
-The parser uses a "Dynamic Address Table Search" to verify this skip. It scans for a valid sequence of `uint32` offsets that point within the file bounds to confirm the start of the LOD table. This is robust across v73, v74, and v75.
+**Recommended Implementation:**
+1.  **Read Header** based on detected version.
+2.  **Read ModelInfo** (Mass, Armor, etc.).
+3.  **Read Animation Flags**.
+4.  **Parse Version-Specific Fields** defined in Section 3.
+5.  **Scan for LOD Table**: Do not rely on fixed-size skips. Implement a scanner that looks for the start of the LOD address table (a sequence of strictly increasing `uint32` offsets) to ensure the parser is perfectly aligned before attempting to read LOD data.
