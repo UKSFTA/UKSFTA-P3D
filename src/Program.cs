@@ -21,6 +21,7 @@ internal sealed class Program
     private static string? _oldPath;
     private static string? _newPath;
 
+    [STAThread]
     private static int Main(string[] args)
     {
         if (args.Length == 0)

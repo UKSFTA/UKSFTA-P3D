@@ -30,7 +30,7 @@ public static class FilePicker
         openFileName.nMaxFile = 256;
         openFileName.lpstrFileTitle = new string(new char[64]);
         openFileName.nMaxFileTitle = 64;
-        openFileName.Flags = 0x00080000 | 0x00001000 | 0x00000800; // OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST
+        openFileName.Flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000004; // OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY
 
         if (GetOpenFileName(ref openFileName))
         {
