@@ -23,7 +23,7 @@ case $command in
         ;;
     "watch")
         echo "👀 Watching for changes..."
-        dotnet watch test src/P3DDebinarizer.csproj --c Debug
+        dotnet watch test tests/P3DDebinarizer.Tests.csproj src/P3DDebinarizer.csproj --c Debug
         ;;
     *)
         echo "Usage: ./dev.sh {test|lint|run|watch}"
