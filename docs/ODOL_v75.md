@@ -3,26 +3,34 @@
 *Documented by Platinum DevOps Suite - June 6, 2026*
 
 ## Overview
-ODOL v75 expands the metadata header block with thermal and mass distribution properties, increasing the size of the "Mystery Block".
+ODOL v75 adds specific thermal and mass distribution properties.
 
-## Header Structure
-- Signature: `ODOL`
-- Version: `75`
-- AppID: `uint32`
-- MuzzleFlash: `ASCIIZ`
-- **Unknown_A**: `uint32`
-- **Unknown_B**: `uint32`
-- **PropertyMassDistribution**: `float[4]`
-- **PropertyThermalSignature**: `float`
+## 1. File Header
+| Offset | Type | Description |
+| :--- | :--- | :--- |
+| `0x00` | `char[4]` | Signature ("ODOL") |
+| `0x04` | `uint32` | Version (75) |
+| `0x08` | `uint32` | AppID |
+| `0x0C` | `ASCIIZ` | MuzzleFlash String |
+| `0xXX` | `uint32` | Unknown_A |
+| `0xXX` | `uint32` | Unknown_B |
+| `0xXX` | `float[4]` | PropertyMassDistribution |
+| `0xXX` | `float` | PropertyThermalSignature |
 
-## Mystery Block
-- Size: 147 bytes
+## 2. Mystery/Metadata Block
+- **Size**: 147 bytes
 
-| Segment | Size |
-| :--- | :--- |
-| Padding | 1 byte |
-| Float Sequence | 12 floats |
-| Shadow Skip | 16 bytes |
-| Model Floats | 11 floats |
-| New v75 Fields | 4 floats + 1 float |
-| Terminator | 1 byte |
+| Structure | Data Type | Notes |
+| :--- | :--- | :--- |
+| Padding | `byte` | Often `0x00` |
+| World Floats | `float[12]` | Physics constants |
+| Shadow Reserved| `byte[16]` | Reserved engine space |
+| Model Floats | `float[11]` | Model-specific physics |
+| Thermal/Mass Data | `float[5]` | v75-specific metadata |
+| Terminator | `byte` | Block termination |
+
+## 3. Animation Section
+Identical to v73.
+
+## 4. LOD Address Table
+Identical to v73.
