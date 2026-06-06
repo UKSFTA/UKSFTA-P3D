@@ -23,7 +23,19 @@ internal sealed class Program
 
     private static int Main(string[] args)
     {
-        if (args.Length == 0 || args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
+        string[] processingArgs = args;
+
+        if (args.Length == 0)
+        {
+            string? pickedFile = FilePicker.PickFile();
+            if (pickedFile == null)
+            {
+                Console.WriteLine("No file selected.");
+                return 0;
+            }
+            processingArgs = new string[] { pickedFile };
+        }
+        else if (args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
         {
             Console.WriteLine("P3D Debinarizer - Arma 3 P3D to MLOD Converter");
             Console.WriteLine("Usage: debinarizer <input> [output] [options]");
@@ -41,20 +53,20 @@ internal sealed class Program
             return 0;
         }
 
-        _showInfo = args.Contains("-info", StringComparer.OrdinalIgnoreCase);
-        _showMap = args.Contains("-map", StringComparer.OrdinalIgnoreCase);
-        _auditLods = args.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
-        _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
-        _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
+        _showInfo = processingArgs.Contains("-info", StringComparer.OrdinalIgnoreCase);
+        _showMap = processingArgs.Contains("-map", StringComparer.OrdinalIgnoreCase);
+        _auditLods = processingArgs.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
+        _verbose = processingArgs.Contains("-v", StringComparer.OrdinalIgnoreCase) || processingArgs.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
+        _recursive = processingArgs.Contains("-r", StringComparer.OrdinalIgnoreCase) || processingArgs.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
 
-        int renameIdx = Array.FindIndex(args, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
-        if (renameIdx != -1 && args.Length > renameIdx + 2)
+        int renameIdx = Array.FindIndex(processingArgs, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
+        if (renameIdx != -1 && processingArgs.Length > renameIdx + 2)
         {
-            _oldPath = args[renameIdx + 1];
-            _newPath = args[renameIdx + 2];
+            _oldPath = processingArgs[renameIdx + 1];
+            _newPath = processingArgs[renameIdx + 2];
         }
 
-        var cleanArgs = args.Where((arg, index) =>
+        var cleanArgs = processingArgs.Where((arg, index) =>
             !arg.StartsWith('-') &&
             (renameIdx == -1 || (index != renameIdx + 1 && index != renameIdx + 2))
         ).ToArray();
