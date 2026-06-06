@@ -1,0 +1,256 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using BisDll;
+using BisDll.Stream;
+using BisDll.Model;
+using BisDll.Model.ODOL;
+using BisDll.Model.MLOD;
+
+namespace P3DDebinarizer;
+
+internal sealed class Program
+{
+    private static bool _showInfo;
+    private static bool _recursive;
+    private static bool _showMap;
+    private static bool _auditLods;
+    private static bool _verbose;
+    private static string? _oldPath;
+    private static string? _newPath;
+
+    private static int Main(string[] args)
+    {
+        if (args.Length == 0 || args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("P3D Debinarizer - Arma 3 P3D to MLOD Converter");
+            Console.WriteLine("Usage: debinarizer <input> [output] [options]");
+            Console.WriteLine("\nArguments:");
+            Console.WriteLine("  <input>           Path to a .p3d file or a directory containing .p3d files.");
+            Console.WriteLine("  [output]          Path to the output file or directory (optional).");
+            Console.WriteLine("\nOptions:");
+            Console.WriteLine("  -info             Show basic information about the P3D file.");
+            Console.WriteLine("  -map              Show structure discovery map (useful for debugging).");
+            Console.WriteLine("  -audit-lods       Perform a performance audit on the LODs.");
+            Console.WriteLine("  -v, --verbose     Enable verbose output.");
+            Console.WriteLine("  -r, --recursive   Search for files recursively in the input directory.");
+            Console.WriteLine("  -rename <old> <new>  Remap texture paths from <old> to <new> during conversion.");
+            Console.WriteLine("  -h, --help        Show this help message.");
+            return 0;
+        }
+
+        _showInfo = args.Contains("-info", StringComparer.OrdinalIgnoreCase);
+        _showMap = args.Contains("-map", StringComparer.OrdinalIgnoreCase);
+        _auditLods = args.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
+        _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
+        _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
+
+        int renameIdx = Array.FindIndex(args, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
+        if (renameIdx != -1 && args.Length > renameIdx + 2)
+        {
+            _oldPath = args[renameIdx + 1];
+            _newPath = args[renameIdx + 2];
+        }
+
+        var cleanArgs = args.Where((arg, index) =>
+            !arg.StartsWith('-') &&
+            (renameIdx == -1 || (index != renameIdx + 1 && index != renameIdx + 2))
+        ).ToArray();
+
+        if (cleanArgs.Length == 0) return 0;
+
+        string input = cleanArgs[0];
+        string? output = cleanArgs.Length >= 2 ? cleanArgs[1] : null;
+
+        if (Directory.Exists(input))
+        {
+            var option = _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            foreach (var file in Directory.EnumerateFiles(input, "*.p3d", option))
+            {
+                ProcessFile(file, output != null ? Path.Combine(output, Path.GetFileName(file)) : null);
+            }
+        }
+        else if (File.Exists(input))
+        {
+            ProcessFile(input, output);
+        }
+        else
+        {
+            Console.WriteLine($"[Error] Input path not found: {input}");
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static void ProcessFile(string inputPath, string? outputPath)
+    {
+        try
+        {
+            using var stream = File.OpenRead(inputPath);
+            var binaryReader = new BinaryReaderEx(stream);
+            // binaryReader.Verbose = _verbose; // Temporarily commented out as it causes unexpected behavior elsewhere in the code
+            try {
+                var p3d = P3D.GetInstance(stream); // Pass stream, not binaryReader instance if needed
+                if (p3d == null) {
+                    Console.WriteLine($" [Warning] {inputPath}: Unsupported or unknown P3D format.");
+                    return;
+                }
+                
+                if (_showInfo) DumpInfo(p3d, inputPath);
+                if (_auditLods) AuditLods(p3d, inputPath);
+                if (_showMap && p3d is ODOL odolMap) DumpStructureMap(binaryReader, odolMap);
+
+                if (outputPath != null && p3d is ODOL odol)
+                {
+                    var mlod = BisDll.Model.Conversion.ODOL2MLOD(odol);
+                    
+                    if (_oldPath != null && _newPath != null) {
+                        Console.WriteLine($" [*] Remapping paths: {_oldPath} -> {_newPath}");
+                        foreach (var lod in mlod.LODs) {
+                            if (lod.Textures != null) {
+                                for (int j = 0; j < lod.Textures.Length; j++) {
+                                    if (lod.Textures[j].Contains(_oldPath, StringComparison.OrdinalIgnoreCase)) {
+                                        lod.Textures[j] = lod.Textures[j].Replace(_oldPath, _newPath, StringComparison.OrdinalIgnoreCase);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    mlod.writeToFile(outputPath, true);
+                    Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
+                }
+            } catch (Exception ex) {
+                if (_verbose) {
+                    Console.WriteLine("\n[Read Coverage Map on Failure]");
+                    foreach (var c in binaryReader.Coverage) {
+                        Console.WriteLine($"  {c.Start:X8} - {c.End:X8} | {c.Label}");
+                    }
+                }
+                if (_showMap) DumpStructureMap(binaryReader, null);
+                if (_verbose) Console.WriteLine($"[Debug] Exception detail: {ex}");
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($" [Error] {inputPath}: {ex.Message}");
+        }
+    }
+
+    private static void AuditLods(P3D p3d, string path)
+    {
+        Console.WriteLine($"\n[Performance Audit] {Path.GetFileName(path)}");
+        bool hasGeometry = false;
+        bool hasShadow = false;
+        int visualLods = 0;
+
+        if (p3d.LODs == null) {
+            Console.WriteLine("  [!] No LOD data found.");
+            return;
+        }
+
+        foreach (var lod in p3d.LODs)
+        {
+            if (lod == null) continue;
+            float res = lod.Resolution;
+            if (res == 1E+13f) hasGeometry = true;
+            if (res >= 10000f && res < 20000f) hasShadow = true;
+            if (res < 10000f) visualLods++;
+
+            string name = lod.Name ?? res.ToString("F1");
+            int points = lod.Points?.Length ?? 0;
+            Console.WriteLine($"  - LOD {name,-15} | Vertices: {points,6}");
+        }
+
+        if (!hasGeometry) Console.WriteLine("  [!] MISSING GEOMETRY LOD (Server performance risk)");
+        if (!hasShadow)   Console.WriteLine("  [!] MISSING SHADOW VOLUME (Client performance risk)");
+        if (visualLods < 2) Console.WriteLine("  [!] LOW LOD COUNT (Optimization risk)");
+        Console.WriteLine("--------------------------------------------------\n");
+    }
+
+    private static void DumpInfo(P3D p3d, string path)
+    {
+        Console.WriteLine($"File: {Path.GetFileName(path)} (v{p3d.Version})");
+        Console.WriteLine($"  Mass: {p3d.Mass:F2}");
+        
+        if (p3d.LODs == null) {
+            Console.WriteLine("  LODs: 0");
+            return;
+        }
+
+        Console.WriteLine($"  LODs: {p3d.LODs.Length}");
+        var allTextures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var allSelections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var allProxies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        foreach (var lod in p3d.LODs)
+        {
+            if (lod == null) continue;
+            string name = lod.Name ?? lod.Resolution.ToString("F1");
+            int points = lod.Points?.Length ?? 0;
+            int texturesCount = lod.Textures?.Length ?? 0;
+            Console.WriteLine($"    - {name}: {points} pts, {texturesCount} textures");
+            
+            if (lod.Textures != null) {
+                foreach (var t in lod.Textures) if (!string.IsNullOrWhiteSpace(t)) allTextures.Add(t);
+            }
+            try {
+                if (lod.Selections != null) {
+                    foreach (var s in lod.Selections) if (!string.IsNullOrWhiteSpace(s)) allSelections.Add(s);
+                }
+            } catch {}
+            try {
+                if (lod.Proxies != null) {
+                    foreach (var p in lod.Proxies) if (!string.IsNullOrWhiteSpace(p)) allProxies.Add(p);
+                }
+            } catch {}
+        }
+
+        if (allTextures.Count > 0) {
+            Console.WriteLine("\n  [VFS Links]");
+            foreach (var t in allTextures.OrderBy(x => x)) Console.WriteLine($"    - {t}");
+        }
+
+        if (allSelections.Count > 0) {
+            Console.WriteLine("\n  [Named Selections]");
+            foreach (var s in allSelections.OrderBy(x => x)) Console.WriteLine($"    - {s}");
+        }
+
+        if (allProxies.Count > 0) {
+            Console.WriteLine("\n  [Proxies]");
+            foreach (var p in allProxies.OrderBy(x => x)) Console.WriteLine($"    - {p}");
+        }
+    }
+
+    private static void DumpStructureMap(BinaryReaderEx reader, ODOL? odol)
+    {
+        Console.WriteLine("\n[Structure Discovery Map]");
+        Console.WriteLine("--------------------------------------------------");
+        Console.WriteLine($"{"Offset (Hex)",-12} | {"Size",-8} | {"Label"}");
+        Console.WriteLine("--------------------------------------------------");
+        
+        var sorted = reader.Coverage.OrderBy(c => c.Start).ToList();
+        long lastEnd = 0;
+
+        foreach (var (start, end, label) in sorted)
+        {
+            if (start > lastEnd)
+            {
+                Console.WriteLine($"{lastEnd:X8}     | {(start - lastEnd),-8} | [GAP / UNKNOWN]");
+            }
+            Console.WriteLine($"{start:X8}     | {(end - start),-8} | {label}");
+            lastEnd = Math.Max(lastEnd, end);
+        }
+        
+        long fileSize = reader.BaseStream.Length;
+        if (lastEnd < fileSize)
+        {
+            Console.WriteLine($"{lastEnd:X8}     | {(fileSize - lastEnd),-8} | [GAP / REMAINING]");
+        }
+        Console.WriteLine("--------------------------------------------------\n");
+    }
+}
