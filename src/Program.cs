@@ -24,8 +24,12 @@ internal sealed class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        Console.WriteLine($"DEBUG: Args length: {args.Length}");
+        foreach (var a in args) Console.WriteLine($"DEBUG: Arg: {a}");
+
         if (args.Length == 0)
         {
+            Console.WriteLine("DEBUG: No args, calling PickFile...");
             string? pickedFile = FilePicker.PickFile();
             if (pickedFile == null)
             {
@@ -37,17 +41,17 @@ internal sealed class Program
         else if (args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
         {
             Console.WriteLine("P3D Debinarizer - Arma 3 P3D to MLOD Converter");
-            Console.WriteLine("Usage: debinarizer <input> [output] [options]");
+            Console.WriteLine("Usage: debinarizer <input> [options]");
             Console.WriteLine("\nArguments:");
             Console.WriteLine("  <input>           Path to a .p3d file or a directory containing .p3d files.");
-            Console.WriteLine("  [output]          Path to the output file or directory (optional).");
             Console.WriteLine("\nOptions:");
+            Console.WriteLine("  -out <dir>        Output directory for batch processing (optional).");
             Console.WriteLine("  -info             Show basic information about the P3D file.");
-            Console.WriteLine("  -map              Show structure discovery map (useful for debugging).");
+            Console.WriteLine("  -map              Show structure discovery map.");
             Console.WriteLine("  -audit-lods       Perform a performance audit on the LODs.");
             Console.WriteLine("  -v, --verbose     Enable verbose output.");
-            Console.WriteLine("  -r, --recursive   Search for files recursively in the input directory.");
-            Console.WriteLine("  -rename <old> <new>  Remap texture paths from <old> to <new> during conversion.");
+            Console.WriteLine("  -r, --recursive   Search for files recursively.");
+            Console.WriteLine("  -rename <old> <new>  Remap texture paths.");
             Console.WriteLine("  -h, --help        Show this help message.");
             return 0;
         }
@@ -58,6 +62,14 @@ internal sealed class Program
         _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
         _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
 
+        int outIdx = Array.FindIndex(args, a => a.Equals("-out", StringComparison.OrdinalIgnoreCase));
+        string? outputDir = null;
+        if (outIdx != -1 && args.Length > outIdx + 1)
+        {
+            outputDir = args[outIdx + 1];
+            if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+        }
+
         int renameIdx = Array.FindIndex(args, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
         if (renameIdx != -1 && args.Length > renameIdx + 2)
         {
@@ -67,25 +79,36 @@ internal sealed class Program
 
         var cleanArgs = args.Where((arg, index) =>
             !arg.StartsWith('-') &&
-            (renameIdx == -1 || (index != renameIdx + 1 && index != renameIdx + 2))
+            (renameIdx == -1 || (index != renameIdx + 1 && index != renameIdx + 2)) &&
+            (outIdx == -1 || (index != outIdx && index != outIdx + 1))
         ).ToArray();
 
         if (cleanArgs.Length == 0) return 0;
 
         string input = cleanArgs[0];
-        string? output = cleanArgs.Length >= 2 ? cleanArgs[1] : null;
+        int success = 0;
+        int failure = 0;
 
         if (Directory.Exists(input))
         {
             var option = _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (var file in Directory.EnumerateFiles(input, "*.p3d", option))
             {
-                ProcessFile(file, output != null ? Path.Combine(output, Path.GetFileName(file)) : null);
+                string? outputPath = null;
+                if (outputDir != null)
+                {
+                    outputPath = Path.Combine(outputDir, Path.GetFileName(file));
+                }
+                
+                if (ProcessFile(file, outputPath)) success++;
+                else failure++;
             }
+            Console.WriteLine($"\nSummary: {success} succeeded, {failure} failed.");
         }
         else if (File.Exists(input))
         {
-            ProcessFile(input, output);
+            if (ProcessFile(input, null)) success++;
+            else failure++;
         }
         else
         {
@@ -96,7 +119,7 @@ internal sealed class Program
         return 0;
     }
 
-    private static void ProcessFile(string inputPath, string? outputPath)
+    private static bool ProcessFile(string inputPath, string? outputPath)
     {
         if (outputPath == null)
         {
@@ -114,7 +137,7 @@ internal sealed class Program
                 var p3d = P3D.GetInstance(stream); // Pass stream, not binaryReader instance if needed
                 if (p3d == null) {
                     Console.WriteLine($" [Warning] {inputPath}: Unsupported or unknown P3D format.");
-                    return;
+                    return false;
                 }
                 
                 if (_showInfo) DumpInfo(p3d, inputPath);
@@ -141,6 +164,7 @@ internal sealed class Program
                     mlod.writeToFile(outputPath, true);
                     Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
                 }
+                return true;
             } catch (Exception ex) {
                 if (_verbose) {
                     Console.WriteLine("\n[Read Coverage Map on Failure]");
@@ -155,7 +179,9 @@ internal sealed class Program
         }
         catch (Exception ex)
         {
+            File.AppendAllText("error.log", $"[{DateTime.Now}] Error processing {inputPath}: {ex.Message}\n");
             Console.WriteLine($" [Error] {inputPath}: {ex.Message}");
+            return false;
         }
     }
 
