@@ -18,6 +18,7 @@ internal sealed class Program
     private static bool _showMap;
     private static bool _auditLods;
     private static bool _verbose;
+    private static bool _exportRvmat;
     private static string? _oldPath;
     private static string? _newPath;
 
@@ -47,6 +48,7 @@ internal sealed class Program
             Console.WriteLine("  -out <dir>        Output directory for batch processing (optional).");
             Console.WriteLine("  -info             Show basic information about the P3D file.");
             Console.WriteLine("  -map              Show structure discovery map.");
+            Console.WriteLine("  -rvmat            Export embedded materials to .rvmat files.");
             Console.WriteLine("  -audit-lods       Perform a performance audit on the LODs.");
             Console.WriteLine("  -v, --verbose     Enable verbose output.");
             Console.WriteLine("  -r, --recursive   Search for files recursively.");
@@ -59,6 +61,7 @@ internal sealed class Program
             // Parse arguments, excluding options
             _showInfo = args.Contains("-info", StringComparer.OrdinalIgnoreCase);
             _showMap = args.Contains("-map", StringComparer.OrdinalIgnoreCase);
+            _exportRvmat = args.Contains("-rvmat", StringComparer.OrdinalIgnoreCase);
             _auditLods = args.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
             _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
             _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
@@ -177,6 +180,21 @@ internal sealed class Program
 
                     mlod.writeToFile(outputPath, true);
                     Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
+                    
+                    if (_exportRvmat && p3d is ODOL odolData && odolData.LODs != null)
+                    {
+                        var materialDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? "", "materials");
+                        foreach (var lod in odolData.LODs)
+                        {
+                            if (lod.Materials != null)
+                            {
+                                foreach (var mat in lod.Materials)
+                                {
+                                    MaterialSerializer.ExportMaterial(mat, materialDir);
+                                }
+                            }
+                        }
+                    }
                 }
                 return true;
             }
