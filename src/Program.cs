@@ -186,11 +186,16 @@ internal sealed class Program
                         var materialDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? "", "materials");
                         foreach (var lod in odolData.LODs)
                         {
-                            if (lod is BisDll.Model.ODOL.LOD odolLod && odolLod.Materials != null)
+                            if (lod is BisDll.Model.ODOL.LOD odolLod)
                             {
-                                foreach (var mat in odolLod.Materials)
+                                Console.WriteLine($"DEBUG: LOD {lod.Resolution} has materials: {odolLod.Materials != null}");
+                                if (odolLod.Materials != null) 
                                 {
-                                    MaterialSerializer.ExportMaterial(mat, materialDir);
+                                    Console.WriteLine($"DEBUG: Material count: {odolLod.Materials.Length}");
+                                    foreach (var mat in odolLod.Materials)
+                                    {
+                                        MaterialSerializer.ExportMaterial(mat, materialDir);
+                                    }
                                 }
                             }
                         }
