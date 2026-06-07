@@ -142,10 +142,9 @@ internal sealed class Program
         {
             using var stream = File.OpenRead(inputPath);
             var binaryReader = new BinaryReaderEx(stream);
-            // binaryReader.Verbose = _verbose; // Temporarily commented out as it causes unexpected behavior elsewhere in the code
             try
             {
-                var p3d = P3D.GetInstance(stream); // Pass stream, not binaryReader instance if needed
+                var p3d = P3D.GetInstance(stream);
                 if (p3d == null)
                 {
                     Console.WriteLine($" [Warning] {inputPath}: Unsupported or unknown P3D format.");
@@ -188,10 +187,8 @@ internal sealed class Program
                         {
                             if (lod is BisDll.Model.ODOL.LOD odolLod)
                             {
-                                Console.WriteLine($"DEBUG: LOD {lod.Resolution} has materials: {odolLod.Materials != null}");
                                 if (odolLod.Materials != null) 
                                 {
-                                    Console.WriteLine($"DEBUG: Material count: {odolLod.Materials.Length}");
                                     foreach (var mat in odolLod.Materials)
                                     {
                                         MaterialSerializer.ExportMaterial(mat, materialDir);
