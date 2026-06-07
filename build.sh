@@ -13,21 +13,17 @@ fi
 
 build_target() {
     local RID=$1
-    local EXT=$2
     echo "🚀 Building UKSFTA P3D Debinarizer ($CONFIG) for $RID..."
-    if [ "$IS_RELEASE" = true ]; then
-        dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o "./dist/$RID"
-    else
-        dotnet build src/P3DDebinarizer.csproj -c "$CONFIG"
-    fi
+    # Always publish to dist/RID so that the output is predictable
+    dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o "./dist/$RID"
     return $?
 }
 
 # 1. Build Logic
-build_target "linux-x64" ""
+build_target "linux-x64"
 LINUX_STATUS=$?
 
-build_target "win-x64" ".exe"
+build_target "win-x64"
 WIN_STATUS=$?
 
 if [ $LINUX_STATUS -eq 0 ] && [ $WIN_STATUS -eq 0 ]; then

@@ -48,6 +48,7 @@ public static class FilePicker
 
     private static string[]? PickFilesLinux()
     {
+        Console.WriteLine("DEBUG: Attempting to launch zenity...");
         try
         {
             var startInfo = new ProcessStartInfo
@@ -59,16 +60,21 @@ public static class FilePicker
                 UseShellExecute = false
             };
             using var process = Process.Start(startInfo);
-            string output = process?.StandardOutput.ReadToEnd().Trim() ?? "";
-            process?.WaitForExit();
+            if (process == null) { Console.WriteLine("DEBUG: Process null"); return null; }
+            Console.WriteLine("DEBUG: Zenity started");
+            string output = process.StandardOutput.ReadToEnd().Trim();
+            string error = process.StandardError.ReadToEnd().Trim();
+            process.WaitForExit();
+            Console.WriteLine($"DEBUG: Zenity exited with {process.ExitCode}");
+            if (!string.IsNullOrEmpty(error)) Console.WriteLine($"DEBUG: Zenity error: {error}");
 
-            if (process?.ExitCode == 0 && !string.IsNullOrEmpty(output))
+            if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
             {
                 return output.Split('|');
             }
             return null;
         }
-        catch { return null; }
+        catch (Exception ex) { Console.WriteLine($"DEBUG: Exception {ex.Message}"); return null; }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
