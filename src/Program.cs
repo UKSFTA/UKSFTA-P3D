@@ -65,7 +65,6 @@ internal sealed class Program
 
             // Handle -out and -rename options before collecting files
             int outIdx = Array.FindIndex(args, a => a.Equals("-out", StringComparison.OrdinalIgnoreCase));
-            string? outputDir = null;
             if (outIdx != -1 && args.Length > outIdx + 1)
             {
                 outputDir = args[outIdx + 1];
