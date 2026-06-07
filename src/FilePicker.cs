@@ -2,80 +2,73 @@ using System;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 
 namespace P3DDebinarizer;
 
 public static class FilePicker
 {
-    public static string? PickFile()
+    public static string[]? PickFiles()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            return PickFileWindows();
+            return PickFilesWindows();
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            return PickFileLinux();
+            return PickFilesLinux();
         }
         return null;
     }
 
-    private static string? PickFileWindows()
+    private static string[]? PickFilesWindows()
     {
-        // Minimal P/Invoke for GetOpenFileName
         var openFileName = new OpenFileName();
         openFileName.lStructSize = Marshal.SizeOf(openFileName);
         openFileName.lpstrFilter = "P3D Files\0*.p3d\0All Files\0*.*\0";
-        openFileName.lpstrFile = new string(new char[256]);
-        openFileName.nMaxFile = 256;
+        char[] buffer = new char[4096];
+        openFileName.lpstrFile = new string(buffer);
+        openFileName.nMaxFile = 4096;
         openFileName.lpstrFileTitle = new string(new char[64]);
         openFileName.nMaxFileTitle = 64;
-        openFileName.Flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000004; // OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY
+        openFileName.Flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000004 | 0x00000200; // OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT
 
         if (GetOpenFileName(ref openFileName))
         {
-            return openFileName.lpstrFile;
+            string[] parts = openFileName.lpstrFile.Split('\0', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 1)
+            {
+                string dir = parts[0];
+                return parts.Skip(1).Select(f => Path.Combine(dir, f)).ToArray();
+            }
+            return new string[] { openFileName.lpstrFile };
         }
         return null;
     }
 
-    private static string? PickFileLinux()
+    private static string[]? PickFilesLinux()
     {
-        Console.WriteLine("DEBUG: Attempting to launch zenity...");
         try
         {
             var startInfo = new ProcessStartInfo
             {
                 FileName = "zenity",
-                Arguments = "--file-selection --title=\"Select P3D file\"",
+                Arguments = "--file-selection --multiple --separator=\"|\" --title=\"Select P3D files\"",
                 RedirectStandardOutput = true,
-                RedirectStandardError = true, // Added to capture potential errors
+                RedirectStandardError = true,
                 UseShellExecute = false
             };
             using var process = Process.Start(startInfo);
-            if (process == null)
+            string output = process?.StandardOutput.ReadToEnd().Trim() ?? "";
+            process?.WaitForExit();
+
+            if (process?.ExitCode == 0 && !string.IsNullOrEmpty(output))
             {
-                Console.WriteLine("DEBUG: Process.Start(zenity) returned null.");
-                return null;
+                return output.Split('|');
             }
-
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            string error = process.StandardError.ReadToEnd().Trim();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                Console.WriteLine($"DEBUG: zenity exited with code {process.ExitCode}. Error: {error}");
-                return null;
-            }
-
-            return output;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"DEBUG: Exception launching zenity: {ex.Message}");
             return null;
         }
+        catch { return null; }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

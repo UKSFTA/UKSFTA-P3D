@@ -24,26 +24,24 @@ internal sealed class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        Console.WriteLine($"DEBUG: Args length: {args.Length}");
-        foreach (var a in args) Console.WriteLine($"DEBUG: Arg: {a}");
+        List<string> inputs = new List<string>();
 
         if (args.Length == 0)
         {
-            Console.WriteLine("DEBUG: No args, calling PickFile...");
-            string? pickedFile = FilePicker.PickFile();
-            if (pickedFile == null)
+            string[]? pickedFiles = FilePicker.PickFiles();
+            if (pickedFiles == null || pickedFiles.Length == 0)
             {
-                Console.WriteLine("No file selected.");
+                Console.WriteLine("No files selected.");
                 return 0;
             }
-            args = new string[] { pickedFile };
+            inputs.AddRange(pickedFiles);
         }
         else if (args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
         {
             Console.WriteLine("P3D Debinarizer - Arma 3 P3D to MLOD Converter");
-            Console.WriteLine("Usage: debinarizer <input> [options]");
+            Console.WriteLine("Usage: debinarizer <input1> <input2> ... [options]");
             Console.WriteLine("\nArguments:");
-            Console.WriteLine("  <input>           Path to a .p3d file or a directory containing .p3d files.");
+            Console.WriteLine("  <input>           Paths to .p3d files or directories.");
             Console.WriteLine("\nOptions:");
             Console.WriteLine("  -out <dir>        Output directory for batch processing (optional).");
             Console.WriteLine("  -info             Show basic information about the P3D file.");
@@ -55,67 +53,76 @@ internal sealed class Program
             Console.WriteLine("  -h, --help        Show this help message.");
             return 0;
         }
-
-        _showInfo = args.Contains("-info", StringComparer.OrdinalIgnoreCase);
-        _showMap = args.Contains("-map", StringComparer.OrdinalIgnoreCase);
-        _auditLods = args.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
-        _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
-        _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
-
-        int outIdx = Array.FindIndex(args, a => a.Equals("-out", StringComparison.OrdinalIgnoreCase));
-        string? outputDir = null;
-        if (outIdx != -1 && args.Length > outIdx + 1)
+        else
         {
-            outputDir = args[outIdx + 1];
-            if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+            // Parse arguments, excluding options
+            _showInfo = args.Contains("-info", StringComparer.OrdinalIgnoreCase);
+            _showMap = args.Contains("-map", StringComparer.OrdinalIgnoreCase);
+            _auditLods = args.Contains("-audit-lods", StringComparer.OrdinalIgnoreCase);
+            _verbose = args.Contains("-v", StringComparer.OrdinalIgnoreCase) || args.Contains("--verbose", StringComparer.OrdinalIgnoreCase);
+            _recursive = args.Contains("-r", StringComparer.OrdinalIgnoreCase) || args.Contains("--recursive", StringComparer.OrdinalIgnoreCase);
+
+            // Handle -out and -rename options before collecting files
+            int outIdx = Array.FindIndex(args, a => a.Equals("-out", StringComparison.OrdinalIgnoreCase));
+            string? outputDir = null;
+            if (outIdx != -1 && args.Length > outIdx + 1)
+            {
+                outputDir = args[outIdx + 1];
+                if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+            }
+
+            int renameIdx = Array.FindIndex(args, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
+            if (renameIdx != -1 && args.Length > renameIdx + 2)
+            {
+                _oldPath = args[renameIdx + 1];
+                _newPath = args[renameIdx + 2];
+            }
+
+            // Collect input files/dirs
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].StartsWith('-'))
+                {
+                    if (args[i].Equals("-out", StringComparison.OrdinalIgnoreCase) || 
+                        args[i].Equals("-rename", StringComparison.OrdinalIgnoreCase)) i++; // Skip option and next arg
+                    continue;
+                }
+                inputs.Add(args[i]);
+            }
         }
 
-        int renameIdx = Array.FindIndex(args, a => a.Equals("-rename", StringComparison.OrdinalIgnoreCase));
-        if (renameIdx != -1 && args.Length > renameIdx + 2)
-        {
-            _oldPath = args[renameIdx + 1];
-            _newPath = args[renameIdx + 2];
-        }
-
-        var cleanArgs = args.Where((arg, index) =>
-            !arg.StartsWith('-') &&
-            (renameIdx == -1 || (index != renameIdx + 1 && index != renameIdx + 2)) &&
-            (outIdx == -1 || (index != outIdx && index != outIdx + 1))
-        ).ToArray();
-
-        if (cleanArgs.Length == 0) return 0;
-
-        string input = cleanArgs[0];
         int success = 0;
         int failure = 0;
 
-        if (Directory.Exists(input))
+        foreach (var input in inputs)
         {
-            var option = _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            foreach (var file in Directory.EnumerateFiles(input, "*.p3d", option))
+            if (Directory.Exists(input))
             {
-                string? outputPath = null;
-                if (outputDir != null)
+                var option = _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                foreach (var file in Directory.EnumerateFiles(input, "*.p3d", option))
                 {
-                    outputPath = Path.Combine(outputDir, Path.GetFileName(file));
+                    string? outputPath = null;
+                    if (outputDir != null)
+                    {
+                        outputPath = Path.Combine(outputDir, Path.GetFileName(file));
+                    }
+                    if (ProcessFile(file, outputPath)) success++;
+                    else failure++;
                 }
-
-                if (ProcessFile(file, outputPath)) success++;
+            }
+            else if (File.Exists(input))
+            {
+                if (ProcessFile(input, null)) success++;
                 else failure++;
             }
-            Console.WriteLine($"\nSummary: {success} succeeded, {failure} failed.");
-        }
-        else if (File.Exists(input))
-        {
-            if (ProcessFile(input, null)) success++;
-            else failure++;
-        }
-        else
-        {
-            Console.WriteLine($"[Error] Input path not found: {input}");
-            return 1;
+            else
+            {
+                Console.WriteLine($"[Error] Input path not found: {input}");
+                failure++;
+            }
         }
 
+        Console.WriteLine($"\nSummary: {success} succeeded, {failure} failed.");
         return 0;
     }
 
