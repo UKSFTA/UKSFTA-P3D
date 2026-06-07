@@ -25,6 +25,7 @@ internal sealed class Program
     private static int Main(string[] args)
     {
         List<string> inputs = new List<string>();
+        string? outputDir = null;
 
         if (args.Length == 0)
         {
