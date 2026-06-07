@@ -186,9 +186,9 @@ internal sealed class Program
                         var materialDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? "", "materials");
                         foreach (var lod in odolData.LODs)
                         {
-                            if (lod.Materials != null)
+                            if (lod is BisDll.Model.ODOL.LOD odolLod && odolLod.Materials != null)
                             {
-                                foreach (var mat in lod.Materials)
+                                foreach (var mat in odolLod.Materials)
                                 {
                                     MaterialSerializer.ExportMaterial(mat, materialDir);
                                 }
