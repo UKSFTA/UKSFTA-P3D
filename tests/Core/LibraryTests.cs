@@ -14,7 +14,9 @@ public class LibraryTests
         {
             current = Directory.GetParent(current)?.FullName;
         }
-        return Path.Combine(current ?? "", "test_p3ds");
+        var path = Path.Combine(current ?? "", "test_p3ds");
+        Console.WriteLine($"DEBUG: Searching for test_p3ds at: {path}");
+        return path;
     }
 
     [Theory]
@@ -22,15 +24,12 @@ public class LibraryTests
     public void Parser_Contract_ValidP3D_ProducesValidModel(string fileName)
     {
         string fullPath = Path.Combine(GetTestP3dPath(), fileName);
-        if (!File.Exists(fullPath))
-        {
-            return;
-        }
+        if (!File.Exists(fullPath)) return;
 
         using var fs = File.OpenRead(fullPath);
-        
+
         var p3d = new P3D(fs);
-        
+
         Assert.NotNull(p3d);
         Assert.True(p3d.LODs.Any(), "A valid P3D must have at least one LOD");
         Assert.All(p3d.LODs, lod => {
@@ -44,18 +43,15 @@ public class LibraryTests
     public void Conversion_Contract_ODOLtoMLOD_ProducesValidStructure(string fileName)
     {
         string fullPath = Path.Combine(GetTestP3dPath(), fileName);
-        if (!File.Exists(fullPath))
-        {
-            return;
-        }
-        
+        if (!File.Exists(fullPath)) return;
+
         using var fs = File.OpenRead(fullPath);
-        
+
         var p3d = new P3D(fs);
         if (p3d.ODOL != null)
         {
             var mlod = ODOL2MLOD.Convert(p3d.ODOL);
-            
+
             Assert.NotNull(mlod);
             Assert.True(mlod.Lods.Any(), "Converted MLOD must have at least one LOD");
             Assert.All(mlod.Lods, lod => {
@@ -64,6 +60,7 @@ public class LibraryTests
             });
         }
     }
+
 
     public static IEnumerable<object[]> GetP3dFiles()
     {
