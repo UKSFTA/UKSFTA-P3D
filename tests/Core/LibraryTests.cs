@@ -65,9 +65,21 @@ public class LibraryTests
     public static IEnumerable<object[]> GetP3dFiles()
     {
         var path = GetTestP3dPath();
-        if (!Directory.Exists(path)) yield break;
+        if (!Directory.Exists(path))
+        {
+            // Return a dummy entry to avoid xUnit "No data found" error in CI
+            yield return new object[] { "_missing_data_" };
+            yield break;
+        }
 
-        foreach (var file in Directory.EnumerateFiles(path, "*.p3d"))
+        var files = Directory.EnumerateFiles(path, "*.p3d").ToList();
+        if (!files.Any())
+        {
+            yield return new object[] { "_missing_data_" };
+            yield break;
+        }
+
+        foreach (var file in files)
         {
             yield return new object[] { Path.GetFileName(file) };
         }
