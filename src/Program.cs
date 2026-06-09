@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BisDll;
-using BisDll.Stream;
-using BisDll.Model;
-using BisDll.Model.ODOL;
-using BisDll.Model.MLOD;
+using BIS.Core.Streams;
+using BIS.P3D;
+using BIS.P3D.ODOL;
+using BIS.P3D.MLOD;
+using BIS.P3D.Conversion;
 
 namespace P3DDebinarizer;
 
@@ -141,58 +141,60 @@ internal sealed class Program
         try
         {
             using var stream = File.OpenRead(inputPath);
-            var binaryReader = new BinaryReaderEx(stream);
+            // Re-creating a BinaryReaderEx is needed for coverage map
+            var binaryReader = new BinaryReaderEx(stream); 
             try
             {
-                var p3d = P3D.GetInstance(stream);
-                if (p3d == null)
-                {
-                    Console.WriteLine($" [Warning] {inputPath}: Unsupported or unknown P3D format.");
-                    return false;
-                }
+                // UKSFTA-BIS uses P3D constructor
+                var p3d = new BIS.P3D.P3D(stream);
+                
+                // Note: P3D doesn't have a GetInstance, constructor is the way.
+                // Assuming p3d is not null based on library behavior.
 
                 if (_showInfo) DumpInfo(p3d, inputPath);
                 if (_auditLods) AuditLods(p3d, inputPath);
-                if (_showMap && p3d is ODOL odolMap) DumpStructureMap(binaryReader, odolMap);
-
-                if (outputPath != null && p3d is ODOL odol)
+                
+                // ODOL mapping
+                if (outputPath != null && p3d.ODOL != null)
                 {
-                    var mlod = BisDll.Model.Conversion.ODOL2MLOD(odol);
+                    Console.WriteLine($" [*] Converting ODOL to MLOD for {inputPath}");
+                    var mlod = ODOL2MLOD.Convert(p3d.ODOL);
+                    
+                    if (mlod == null) 
+                    {
+                        Console.WriteLine($" [Error] Conversion returned null for {inputPath}");
+                        return false;
+                    }
 
                     if (_oldPath != null && _newPath != null)
                     {
                         Console.WriteLine($" [*] Remapping paths: {_oldPath} -> {_newPath}");
-                        foreach (var lod in mlod.LODs)
+                        foreach (var lod in mlod.Lods)
                         {
-                            if (lod.Textures != null)
+                            foreach (var face in lod.Faces)
                             {
-                                for (int j = 0; j < lod.Textures.Length; j++)
+                                if (face.Texture != null && face.Texture.Contains(_oldPath, StringComparison.OrdinalIgnoreCase))
                                 {
-                                    if (lod.Textures[j].Contains(_oldPath, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        lod.Textures[j] = lod.Textures[j].Replace(_oldPath, _newPath, StringComparison.OrdinalIgnoreCase);
-                                    }
+                                    face.Texture = face.Texture.Replace(_oldPath, _newPath, StringComparison.OrdinalIgnoreCase);
                                 }
                             }
                         }
                     }
 
-                    mlod.writeToFile(outputPath, true);
+                    Console.WriteLine($" [*] Writing MLOD to {outputPath}");
+                    mlod.WriteToFile(outputPath, true);
                     Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
 
-                    if (_exportRvmat && p3d is ODOL odolData && odolData.LODs != null)
+                    if (_exportRvmat && p3d.ODOL != null && p3d.ODOL.Lods != null)
                     {
                         var materialDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? "", "materials");
-                        foreach (var lod in odolData.LODs)
+                        foreach (var lod in p3d.ODOL.Lods)
                         {
-                            if (lod is BisDll.Model.ODOL.LOD odolLod)
+                            if (lod.Materials != null)
                             {
-                                if (odolLod.Materials != null)
+                                foreach (var mat in lod.Materials)
                                 {
-                                    foreach (var mat in odolLod.Materials)
-                                    {
-                                        MaterialSerializer.ExportMaterial(mat, materialDir);
-                                    }
+                                    MaterialSerializer.ExportMaterial(mat, materialDir);
                                 }
                             }
                         }
@@ -202,15 +204,6 @@ internal sealed class Program
             }
             catch (Exception ex)
             {
-                if (_verbose)
-                {
-                    Console.WriteLine("\n[Read Coverage Map on Failure]");
-                    foreach (var c in binaryReader.Coverage)
-                    {
-                        Console.WriteLine($"  {c.Start:X8} - {c.End:X8} | {c.Label}");
-                    }
-                }
-                if (_showMap) DumpStructureMap(binaryReader, null);
                 if (_verbose) Console.WriteLine($"[Debug] Exception detail: {ex}");
                 throw;
             }
@@ -266,7 +259,7 @@ internal sealed class Program
             return;
         }
 
-        Console.WriteLine($"  LODs: {p3d.LODs.Length}");
+        Console.WriteLine($"  LODs: {p3d.LODs.Count()}");
         var allTextures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allSelections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allProxies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -318,33 +311,5 @@ internal sealed class Program
             Console.WriteLine("\n  [Proxies]");
             foreach (var p in allProxies.OrderBy(x => x)) Console.WriteLine($"    - {p}");
         }
-    }
-
-    private static void DumpStructureMap(BinaryReaderEx reader, ODOL? odol)
-    {
-        Console.WriteLine("\n[Structure Discovery Map]");
-        Console.WriteLine("--------------------------------------------------");
-        Console.WriteLine($"{"Offset (Hex)",-12} | {"Size",-8} | {"Label"}");
-        Console.WriteLine("--------------------------------------------------");
-
-        var sorted = reader.Coverage.OrderBy(c => c.Start).ToList();
-        long lastEnd = 0;
-
-        foreach (var (start, end, label) in sorted)
-        {
-            if (start > lastEnd)
-            {
-                Console.WriteLine($"{lastEnd:X8}     | {(start - lastEnd),-8} | [GAP / UNKNOWN]");
-            }
-            Console.WriteLine($"{start:X8}     | {(end - start),-8} | {label}");
-            lastEnd = Math.Max(lastEnd, end);
-        }
-
-        long fileSize = reader.BaseStream.Length;
-        if (lastEnd < fileSize)
-        {
-            Console.WriteLine($"{lastEnd:X8}     | {(fileSize - lastEnd),-8} | [GAP / REMAINING]");
-        }
-        Console.WriteLine("--------------------------------------------------\n");
     }
 }
