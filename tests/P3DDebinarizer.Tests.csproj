@@ -20,6 +20,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\P3DDebinarizer.csproj" />
+    <ProjectReference Include="..\..\UKSFTA-BIS\BIS.P3D\BIS.P3D.csproj" />
+    <ProjectReference Include="..\..\UKSFTA-BIS\BIS.Core\BIS.Core.csproj" />
+    <ProjectReference Include="..\..\UKSFTA-BIS\BIS.PBO\BIS.PBO.csproj" />
+    <ProjectReference Include="..\libs\UKSFTA-BIS\BIS.P3D\BIS.P3D.csproj" />
+    <ProjectReference Include="..\libs\UKSFTA-BIS\BIS.Core\BIS.Core.csproj" />
+    <ProjectReference Include="..\libs\UKSFTA-BIS\BIS.PBO\BIS.PBO.csproj" />
   </ItemGroup>
 
 </Project>
