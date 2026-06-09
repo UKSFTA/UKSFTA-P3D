@@ -16,3 +16,7 @@ out/
 # Dependencies
 **/bin/
 **/obj/
+
+# Testing
+*.pbo
+test_p3ds/
