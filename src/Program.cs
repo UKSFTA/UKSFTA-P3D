@@ -267,7 +267,7 @@ internal sealed class Program
         foreach (var lod in p3d.LODs)
         {
             if (lod == null) continue;
-            string name = lod.Name ?? lod.Resolution.ToString("F1");
+            string name = lod.Resolution.GetLODName();
             int points = lod.Points?.Length ?? 0;
             int texturesCount = lod.Textures?.Length ?? 0;
             Console.WriteLine($"    - {name}: {points} pts, {texturesCount} textures");
