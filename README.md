@@ -1,56 +1,65 @@
-# P3D Debinarizer (Platinum Edition)
+# UKSFTA P3D Debinarizer
 
-A professional-grade, cross-platform tool for converting Arma 3 **ODOL** (binarized) models to **MLOD** (editable) format.
+A professional-grade, cross-platform debinarization toolkit for Arma 3. Converts binary **ODOL** models into editable **MLOD** format, providing tools for model forensics, audit, and manipulation within the UKSF Taskforce Alpha development pipeline.
 
-## Key Features
+## 🚀 Key Features
 
 *   **Format Versatility**: Native support for ODOL v73, v74, and v75.
-*   **Professional Toolkit**:
-    *   **Forensics & Audits**: Detailed model analysis, complexity auditing, and binary structure mapping.
+*   **Forensics & Auditing**:
+    *   **Info**: Deep model diagnostics (mass, texture mapping, LOD data).
+    *   **Audit**: Complexity auditing for high-performance simulation (missing PhysX, LOD counts).
+    *   **Structure Discovery**: Binary structure map of ODOL chunks.
+*   **Advanced Extraction**:
     *   **Material Extraction**: Converts embedded materials to standard `.rvmat` files.
     *   **Skeleton Export**: Generates `model.cfg` skeleton hierarchies for rigging.
-    *   **Sanity & Repair**: Automatic path normalization and property manipulation.
+    *   **Reference Validation**: Texture and material path audit against a defined mod root.
+*   **Manipulation & Repair**:
+    *   **Property Editor**: Batch update/delete model properties (`autocenter`, `mass`, etc.).
+    *   **Sanity Fixes**: Automatic path normalization and trimming for engine compliance.
 *   **Production UX**:
-    *   Drag-and-drop support (via CLI argument pass-through).
-    *   Native multi-file selection via GUI (Windows/Linux).
-    *   Batch processing with dedicated output directories.
-    *   Comprehensive error logging (`error.log`).
+    *   Drag-and-drop support.
+    *   Native multi-file GUI selection.
+    *   PBO archive processing.
 
-## Usage
+## 🛠 Infrastructure
 
-### 1. GUI Mode (Quick Start)
-Simply double-click the `debinarizer` binary to open the native file picker. 
-*   **Multi-Select**: Hold `Ctrl` or `Shift` to select multiple `.p3d` or `.pbo` files at once.
-*   The tool will automatically convert them and save them with the `_MLOD.p3d` suffix in the same directory.
+- **Engine:** .NET 10.0 (C#)
+- **Library:** `BIS.Core`, `BIS.P3D`, `BIS.PBO` (internal implementations).
+- **Compliance:** Requires GPG signing for all commits.
 
-### 2. CLI Mode (Advanced)
+## 📦 Usage
 
+### GUI Mode
+Double-click the `debinarizer` binary to open the native file picker. Supports multi-select via `Ctrl`/`Shift` clicking. Files will be converted in-place or into the specified output directory.
+
+### CLI Mode
 ```bash
 # Convert a single file
 ./debinarizer input.p3d
 
-# Batch directory conversion with output folder
+# Batch directory conversion
 ./debinarizer /path/to/models -out /path/to/output
 
-# Extract materials and skeletons for batch assets
+# Extract materials and skeletons
 ./debinarizer /path/to/models -rvmat -skeleton
 
-# Audit model performance and validate texture paths
+# Audit and validate
 ./debinarizer input.p3d -audit-lods -validate -root P:\
 ```
 
-## Advanced Options
+## 🔧 Command Reference
 
-| Option | Description |
+| Command | Description |
 | :--- | :--- |
-| `-out <dir>` | Output directory for processed files. |
-| `-root <path>` | Local mod root for path validation. |
-| `-validate` | Validate texture/material paths against mod root. |
-| `-rvmat` | Extract embedded materials to `.rvmat`. |
-| `-skeleton` | Export skeleton hierarchy to `.cfg`. |
-| `-info` | Show deep model forensics. |
-| `-audit-lods`| Audit complexity and PhysX compatibility. |
-| `-r` | Process directories recursively. |
+| `-out <dir>` | Specify target directory. |
+| `-rvmat` | Extract embedded materials. |
+| `-skeleton` | Export skeleton definition. |
+| `-validate` | Check texture/material paths. |
+| `-root <path>` | Root folder for path validation. |
+| `-fix` | Apply path and name normalization. |
+| `-info` | Show deep forensics. |
+| `-map` | Map file structure. |
 
----
-*Maintained by the UKSFTA Development Team*
+## ⚖ License
+
+This project is licensed under the **Arma Public License - Share Alike (APL-SA)**.
