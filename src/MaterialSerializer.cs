@@ -11,13 +11,13 @@ public static class MaterialSerializer
     {
         string fileName = material.materialName;
         if (string.IsNullOrEmpty(fileName)) return;
-        
+
         // Ensure the filename ends with .rvmat
         if (!fileName.EndsWith(".rvmat", StringComparison.OrdinalIgnoreCase))
             fileName += ".rvmat";
 
         string filePath = Path.Combine(outputDirectory, fileName);
-        
+
         // Ensure directory exists
         Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? outputDirectory);
 

@@ -86,7 +86,7 @@ internal sealed class Program
             {
                 if (args[i].StartsWith('-'))
                 {
-                    if (args[i].Equals("-out", StringComparison.OrdinalIgnoreCase) || 
+                    if (args[i].Equals("-out", StringComparison.OrdinalIgnoreCase) ||
                         args[i].Equals("-rename", StringComparison.OrdinalIgnoreCase)) i++; // Skip option and next arg
                     continue;
                 }
@@ -179,7 +179,7 @@ internal sealed class Program
 
                     mlod.writeToFile(outputPath, true);
                     Console.WriteLine($"[Success] {inputPath} -> {outputPath}");
-                    
+
                     if (_exportRvmat && p3d is ODOL odolData && odolData.LODs != null)
                     {
                         var materialDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? "", "materials");
@@ -187,7 +187,7 @@ internal sealed class Program
                         {
                             if (lod is BisDll.Model.ODOL.LOD odolLod)
                             {
-                                if (odolLod.Materials != null) 
+                                if (odolLod.Materials != null)
                                 {
                                     foreach (var mat in odolLod.Materials)
                                     {
