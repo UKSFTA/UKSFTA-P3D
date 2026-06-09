@@ -10,11 +10,11 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 case $command in
     "test")
         echo "🧪 Running Fast Unit Tests..."
-        dotnet test --no-restore -c Debug
+        dotnet test tests/P3DDebinarizer.Tests.csproj --no-restore -c Debug
         ;;
     "lint")
         echo "🧹 Linting & Formatting..."
-        dotnet format
+        dotnet format src/P3DDebinarizer.csproj
         ;;
     "run")
         shift
@@ -23,7 +23,7 @@ case $command in
         ;;
     "watch")
         echo "👀 Watching for changes..."
-        dotnet watch test tests/P3DDebinarizer.Tests.csproj src/P3DDebinarizer.csproj --c Debug
+        dotnet watch test tests/P3DDebinarizer.Tests.csproj --c Debug
         ;;
     *)
         echo "Usage: ./dev.sh {test|lint|run|watch}"
