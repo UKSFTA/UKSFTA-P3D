@@ -27,3 +27,4 @@ Thumbs.db
 test_p3ds/
 test_output_*/
 *.log
+releases/
