@@ -9,8 +9,8 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 case $command in
     "test")
-        echo "🧪 Running Fast Unit Tests..."
-        dotnet test tests/P3DDebinarizer.Tests.csproj --no-restore -c Debug
+        echo "🧪 Running Fast Unit Tests for P3DDebinarizer..."
+        dotnet test tests/P3DDebinarizer.Tests.csproj -c Debug
         ;;
     "lint")
         echo "🧹 Linting & Formatting..."
