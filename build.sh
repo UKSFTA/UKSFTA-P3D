@@ -14,8 +14,11 @@ fi
 build_target() {
     local RID=$1
     echo "🚀 Building UKSFTA P3D Debinarizer ($CONFIG) for $RID..."
-    # Always publish to dist/RID so that the output is predictable
-    dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o "./dist/$RID"
+    git submodule update --init --recursive
+    # Restore solution to ensure all project references are valid
+    dotnet restore P3DDebinarizer.sln
+    # Publish project with RID
+    dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -o "./dist/$RID"
     return $?
 }
 
