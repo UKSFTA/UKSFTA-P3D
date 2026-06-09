@@ -142,25 +142,25 @@ internal sealed class Program
         {
             using var stream = File.OpenRead(inputPath);
             // Re-creating a BinaryReaderEx is needed for coverage map
-            var binaryReader = new BinaryReaderEx(stream); 
+            var binaryReader = new BinaryReaderEx(stream);
             try
             {
                 // UKSFTA-BIS uses P3D constructor
                 var p3d = new BIS.P3D.P3D(stream);
-                
+
                 // Note: P3D doesn't have a GetInstance, constructor is the way.
                 // Assuming p3d is not null based on library behavior.
 
                 if (_showInfo) DumpInfo(p3d, inputPath);
                 if (_auditLods) AuditLods(p3d, inputPath);
-                
+
                 // ODOL mapping
                 if (outputPath != null && p3d.ODOL != null)
                 {
                     Console.WriteLine($" [*] Converting ODOL to MLOD for {inputPath}");
                     var mlod = ODOL2MLOD.Convert(p3d.ODOL);
-                    
-                    if (mlod == null) 
+
+                    if (mlod == null)
                     {
                         Console.WriteLine($" [Error] Conversion returned null for {inputPath}");
                         return false;
