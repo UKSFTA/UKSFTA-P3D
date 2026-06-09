@@ -22,11 +22,15 @@ public class LibraryTests
     public void Parser_Contract_ValidP3D_ProducesValidModel(string fileName)
     {
         string fullPath = Path.Combine(GetTestP3dPath(), fileName);
+        if (!File.Exists(fullPath))
+        {
+            throw new Xunit.SkipException("Test data file not found: " + fullPath);
+        }
+
         using var fs = File.OpenRead(fullPath);
         
         var p3d = new P3D(fs);
         
-        // Assert invariants that must hold for any valid P3D file
         Assert.NotNull(p3d);
         Assert.True(p3d.LODs.Any(), "A valid P3D must have at least one LOD");
         Assert.All(p3d.LODs, lod => {
@@ -40,6 +44,11 @@ public class LibraryTests
     public void Conversion_Contract_ODOLtoMLOD_ProducesValidStructure(string fileName)
     {
         string fullPath = Path.Combine(GetTestP3dPath(), fileName);
+        if (!File.Exists(fullPath))
+        {
+            throw new Xunit.SkipException("Test data file not found: " + fullPath);
+        }
+        
         using var fs = File.OpenRead(fullPath);
         
         var p3d = new P3D(fs);
