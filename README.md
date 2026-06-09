@@ -1,40 +1,54 @@
 # P3D Debinarizer (Platinum Edition)
 
-A high-performance, cross-platform tool for converting Arma 3 **ODOL** (binarized) models to **MLOD** (editable) format.
+A professional-grade, cross-platform tool for converting Arma 3 **ODOL** (binarized) models to **MLOD** (editable) format.
 
-## 🚀 New Features (v1.2.0)
+## 🚀 Key Features
 
-*   **ODOL v73/v74/v75 Support**: Full support for the latest Arma 3 model formats.
-*   **Production-Grade UX**: Drag-and-drop support, native file picker, and automatic batch output handling (`<FILENAME>_MLOD.p3d`).
-*   **Batch Processing & Logging**: Dedicated output directories (`-out`), error logging (`error.log`), and success/failure summaries.
-*   **Structure Discovery Map**: A powerful new diagnostic tool (`-map`).
-*   **Path Normalization**: Built-in bulk renaming tool (`-rename`).
+*   **Format Versatility**: Native support for ODOL v73, v74, and v75.
+*   **Professional Toolkit**:
+    *   **Forensics & Audits**: Detailed model analysis, complexity auditing, and binary structure mapping.
+    *   **Material Extraction**: Converts embedded materials to standard `.rvmat` files.
+    *   **Skeleton Export**: Generates `model.cfg` skeleton hierarchies for rigging.
+    *   **Sanity & Repair**: Automatic path normalization and property manipulation.
+*   **Production UX**:
+    *   Drag-and-drop support (via CLI argument pass-through).
+    *   Native multi-file selection via GUI (Windows/Linux).
+    *   Batch processing with dedicated output directories.
+    *   Comprehensive error logging and success/failure summaries.
+    *   Texture path validation against a defined mod root.
 
 ## 📦 Usage
 
-```bash
-# GUI File Picker (Double-click executable)
-./debinarizer
+### GUI Mode
+Simply double-click the `debinarizer` binary (or run without arguments) to open the native file picker. You can hold `Ctrl` or `Shift` to select multiple files at once.
 
-# Basic conversion
-./debinarizer input.p3d output.p3d
+### CLI Mode
+```bash
+# Convert a single file
+./debinarizer input.p3d
 
 # Batch directory conversion with output folder
 ./debinarizer /path/to/models -out /path/to/output
 
-# Generate Structure Discovery Map (for debugging)
-./debinarizer input.p3d -map
+# Export materials and skeletons for batch assets
+./debinarizer /path/to/models -rvmat -skeleton
+
+# Audit model performance and validate texture paths
+./debinarizer input.p3d -audit-lods -validate -root P:\
 ```
 
 ## 📂 Project Structure
 
-- `src/`: Source code.
-- `tests/`: Unit tests.
-- `test_p3ds/`: Test model files.
+- `src/`: Core source code and utility modules.
+- `tests/`: Unit and integration test suite.
+- `docs/`: Technical specifications for ODOL versions.
 
-## 📚 Documentation
+## 📚 Technical Documentation
 
-For detailed technical specifications of the ODOL formats (v73/v74/v75), see [docs/ODOL_v73_SPEC.md](docs/ODOL_v73_SPEC.md).
+For in-depth technical specifications of the ODOL formats (v73-v75), see the documents in the `docs/` directory:
+- [ODOL v73 Spec](docs/ODOL_v73.md)
+- [ODOL v74 Spec](docs/ODOL_v74.md)
+- [ODOL v75 Spec](docs/ODOL_v75.md)
 
 ---
 *Maintained by the UKSFTA Development Team*
