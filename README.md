@@ -1,6 +1,8 @@
 # UKSFTA P3D Debinarizer
 
-[![Build](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/dotnet.yml/badge.svg)](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/dotnet.yml)
+[![Build](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/build.yml/badge.svg)](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/build.yml)
+[![Test](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/test.yml/badge.svg)](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/test.yml)
+[![Lint](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/lint.yml/badge.svg)](https://github.com/UKSFTA/UKSFTA-P3D/actions/workflows/lint.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey)]()
 

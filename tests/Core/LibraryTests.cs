@@ -32,7 +32,8 @@ public class LibraryTests
 
         Assert.NotNull(p3d);
         Assert.True(p3d.LODs.Any(), "A valid P3D must have at least one LOD");
-        Assert.All(p3d.LODs, lod => {
+        Assert.All(p3d.LODs, lod =>
+        {
             Assert.True(lod.Resolution >= 0, "LOD resolution must be non-negative");
             Assert.NotNull(lod.Points);
         });
@@ -54,7 +55,8 @@ public class LibraryTests
 
             Assert.NotNull(mlod);
             Assert.True(mlod.Lods.Any(), "Converted MLOD must have at least one LOD");
-            Assert.All(mlod.Lods, lod => {
+            Assert.All(mlod.Lods, lod =>
+            {
                 Assert.NotNull(lod.Faces);
                 Assert.NotNull(lod.Points);
             });

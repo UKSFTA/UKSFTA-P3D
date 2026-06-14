@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 PROJECT_ROOT=$(pwd)
-export SOURCE_DATE_EPOCH=$(date +%s)
+SOURCE_DATE_EPOCH=$(date +%s)
+export SOURCE_DATE_EPOCH
 
 # CONFIG defaults
 CONFIG="Debug"
@@ -68,7 +69,7 @@ if [ $LINUX_STATUS -eq 0 ] && [ $WIN_STATUS -eq 0 ]; then
             fi
             
             echo "✨ $RID release packaged: releases/$ZIP_NAME"
-            rm -rf "$STAGING_DIR/$PROJECT_ID"
+            rm -rf "${STAGING_DIR:?}/$PROJECT_ID"
         done
         
         rm -rf "$STAGING_DIR"
