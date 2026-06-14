@@ -6,7 +6,7 @@ command=$1
 
 # Force Linux development
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
-export ARMA3_SAMPLES_PATH="/ext/SteamLibrary/steamapps/common/Arma 3 Samples"
+export ARMA3_SAMPLES_PATH="${ARMA3_SAMPLES_PATH:-/path/to/Steam/steamapps/common/Arma 3 Samples}"
 
 case $command in
     "test")
