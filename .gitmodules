@@ -1,0 +1,6 @@
+[submodule "docs"]
+	path = docs
+	url = git@github.com:UKSFTA/UKSFTA-P3D.wiki.git
+[submodule "libs"]
+	path = libs
+	url = https://github.com/UKSFTA/UKSFTA-BIS

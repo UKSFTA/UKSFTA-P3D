@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -20,6 +20,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\P3DDebinarizer.csproj" />
+    <ProjectReference Include="..\libs\BIS.P3D\BIS.P3D.csproj" />
+    <ProjectReference Include="..\libs\BIS.Core\BIS.Core.csproj" />
+    <ProjectReference Include="..\libs\BIS.PBO\BIS.PBO.csproj" />
   </ItemGroup>
 
 </Project>

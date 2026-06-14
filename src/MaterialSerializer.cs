@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using BisDll.Model.ODOL;
+using BIS.P3D.ODOL;
 
 namespace P3DDebinarizer;
 
@@ -9,7 +9,7 @@ public static class MaterialSerializer
 {
     public static void ExportMaterial(EmbeddedMaterial material, string outputDirectory)
     {
-        string fileName = material.materialName;
+        string fileName = material.MaterialName;
         if (string.IsNullOrEmpty(fileName)) return;
 
         // Ensure the filename ends with .rvmat
@@ -26,7 +26,7 @@ public static class MaterialSerializer
         {
             writer.WriteLine("class _ARMA_DLL {");
             writer.WriteLine("    class Surface {");
-            writer.WriteLine($"        material = \"{material.materialName}\";");
+            writer.WriteLine($"        material = \"{material.MaterialName}\";");
             writer.WriteLine("    };");
             writer.WriteLine("};");
             // Note: A full RVMAT serializer would need to map all fields in EmbeddedMaterial

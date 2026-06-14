@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 PROJECT_ROOT=$(pwd)
-export SOURCE_DATE_EPOCH=$(date +%s)
+SOURCE_DATE_EPOCH=$(date +%s)
+export SOURCE_DATE_EPOCH
 
 # CONFIG defaults
 CONFIG="Debug"
@@ -14,8 +15,11 @@ fi
 build_target() {
     local RID=$1
     echo "🚀 Building UKSFTA P3D Debinarizer ($CONFIG) for $RID..."
-    # Always publish to dist/RID so that the output is predictable
-    dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o "./dist/$RID"
+    git submodule update --init --recursive
+    # Restore solution to ensure all project references are valid
+    dotnet restore P3DDebinarizer.sln
+    # Publish project with RID
+    dotnet publish src/P3DDebinarizer.csproj -c "$CONFIG" -r "$RID" --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -o "./dist/$RID"
     return $?
 }
 
@@ -65,7 +69,7 @@ if [ $LINUX_STATUS -eq 0 ] && [ $WIN_STATUS -eq 0 ]; then
             fi
             
             echo "✨ $RID release packaged: releases/$ZIP_NAME"
-            rm -rf "$STAGING_DIR/$PROJECT_ID"
+            rm -rf "${STAGING_DIR:?}/$PROJECT_ID"
         done
         
         rm -rf "$STAGING_DIR"

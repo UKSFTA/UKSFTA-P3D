@@ -1,16 +1,17 @@
 #!/bin/bash
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_DIR"
+cd "$PROJECT_DIR" || exit 1
 
 command=$1
 
 # Force Linux development
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export ARMA3_SAMPLES_PATH="${ARMA3_SAMPLES_PATH:-/path/to/Steam/steamapps/common/Arma 3 Samples}"
 
 case $command in
     "test")
-        echo "🧪 Running Fast Unit Tests..."
-        dotnet test tests/P3DDebinarizer.Tests.csproj --no-restore -c Debug
+        echo "🧪 Running Fast Unit Tests for P3DDebinarizer..."
+        dotnet test tests/P3DDebinarizer.Tests.csproj -c Debug
         ;;
     "lint")
         echo "🧹 Linting & Formatting..."

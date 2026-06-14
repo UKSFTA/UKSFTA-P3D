@@ -1,22 +1,30 @@
-# Build artifacts
-bin/
-obj/
-dist/
-out/
+# Build output
+**/bin/
+**/obj/
+**/dist/
+**/out/
+
+# .NET / VS / OS
 .vs/
 .vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+Thumbs.db
 
-# Build and OS files
+# Binaries
 *.exe
 *.dll
 *.so
 *.dylib
 *.pdb
 
-# Dependencies
-**/bin/
-**/obj/
-
-# Testing
+# Test data & artifacts
 *.pbo
+*.p3d
 test_p3ds/
+test_output_*/
+*.log
+releases/
