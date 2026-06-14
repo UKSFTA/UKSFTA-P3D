@@ -106,7 +106,7 @@ available in the `docs/` directory (a Git submodule pointing to the
 
 The application depends on three projects from the
 [UKSFTA-BIS](https://github.com/UKSFTA/UKSFTA-BIS) format library
-(via a Git submodule at `libs/UKSFTA-BIS/`):
+(via a Git submodule at `libs/`):
 
 | Library | Role |
 |---|---|
